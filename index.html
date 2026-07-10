@@ -3,169 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Domino Sederhana</title>
+    <title>Game Catur Keren</title>
+    <!-- Memuat pustaka CSS dan JS dari CDN untuk tampilan dan aturan catur -->
+    <link rel="stylesheet" href="https://cloudflare.com">
+    <script src="https://jquery.com"></script>
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #f4f4f9;
-            padding: 50px;
-        }
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            max-width: 400px;
-            margin: auto;
-        }
-        .domino-board {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 30px 0;
-        }
-        .domino {
-            width: 80px;
-            height: 160px;
-            border: 2px solid #333;
-            border-radius: 10px;
-            background-color: white;
+            background-color: #2b2b2b;
+            color: #fff;
             display: flex;
             flex-direction: column;
-        }
-        .half {
-            flex: 1;
-            display: flex;
-            justify-content: center;
             align-items: center;
-            position: relative;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
         }
-        .half:first-child {
-            border-bottom: 1px solid #333;
-        }
-        /* Desain Titik Domino (Pip) */
-        .pip {
-            width: 15px;
-            height: 15px;
-            background-color: black;
-            border-radius: 50%;
-            position: absolute;
-        }
-        
-        /* Posisi titik di dalam kotak */
-        .pip-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .pip-top-left { top: 20%; left: 20%; }
-        .pip-bottom-right { bottom: 20%; right: 20%; }
-        .pip-top-right { top: 20%; right: 20%; }
-        .pip-bottom-left { bottom: 20%; left: 20%; }
-        
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        h2 {
-            margin-top: 20px;
+        h1 { margin-bottom: 10px; }
+        #board { width: 400px; margin-bottom: 20px; }
+        .info {
+            background: #444;
+            padding: 15px;
+            border-radius: 8px;
+            width: 370px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Domino Acak</h1>
-    <div class="domino-board">
-        <!-- Domino 1 -->
-        <div class="domino" id="domino1">
-            <div class="half" id="d1-top"></div>
-            <div class="half" id="d1-bottom"></div>
-        </div>
-        <!-- Domino 2 -->
-        <div class="domino" id="domino2">
-            <div class="half" id="d2-top"></div>
-            <div class="half" id="d2-bottom"></div>
-        </div>
-    </div>
+    <h1>Game Catur Online</h1>
+    <div id="board"></div>
     
-    <button onclick="acakDomino()">Acak Domino</button>
-    <h2 id="hasil">Tekan tombol untuk bermain!</h2>
-</div>
+    <div class="info">
+        <p><strong>Status:</strong> <span id="game-status">Giliran Putih</span></p>
+        <p><strong>Riwayat Langkah:</strong> <span id="history">Tidak ada</span></p>
+    </div>
 
-<script>
-    // Fungsi untuk membuat pola titik domino
-    function buatPolaTitik(jumlah) {
-        let html = '';
-        if (jumlah === 1) html = '<div class="pip pip-center"></div>';
-        else if (jumlah === 2) {
-            html = '<div class="pip pip-top-left"></div>' +
-                   '<div class="pip pip-bottom-right"></div>';
-        }
-        else if (jumlah === 3) {
-            html = '<div class="pip pip-top-left"></div>' +
-                   '<div class="pip pip-center"></div>' +
-                   '<div class="pip pip-bottom-right"></div>';
-        }
-        else if (jumlah === 4) {
-            html = '<div class="pip pip-top-left"></div>' +
-                   '<div class="pip pip-top-right"></div>' +
-                   '<div class="pip pip-bottom-left"></div>' +
-                   '<div class="pip pip-bottom-right"></div>';
-        }
-        else if (jumlah === 5) {
-            html = '<div class="pip pip-top-left"></div>' +
-                   '<div class="pip pip-top-right"></div>' +
-                   '<div class="pip pip-center"></div>' +
-                   '<div class="pip pip-bottom-left"></div>' +
-                   '<div class="pip pip-bottom-right"></div>';
-        }
-        else if (jumlah === 6) {
-            html = '<div class="pip pip-top-left"></div>' +
-                   '<div class="pip pip-top-right"></div>' +
-                   '<div class="pip pip-middle-left"></div>' +
-                   '<div class="pip pip-middle-right"></div>' +
-                   '<div class="pip pip-bottom-left"></div>' +
-                   '<div class="pip pip-bottom-right"></div>';
-        }
-        return html;
-    }
+    <script>
+        var board = null;
+        var game = new Chess();
+        var statusEl = $('#game-status');
+        var historyEl = $('#history');
 
-    function acakDomino() {
-        // Acak angka dari 0 sampai 6
-        let d1_ atas = Math.floor(Math.random() * 7);
-        let d1_bawah = Math.floor(Math.random() * 7);
-        let d2_ atas = Math.floor(Math.random() * 7);
-        let d2_bawah = Math.floor(Math.random() * 7);
-
-        // Tampilkan gambar titik
-        document.getElementById('d1-top').innerHTML = buatPolaTitik(d1_ atas);
-        document.getElementById('d1-bottom').innerHTML = buatPolaTitik(d1_bawah);
-        document.getElementById('d2-top').innerHTML = buatPolaTitik(d2_ atas);
-        document.getElementById('d2-bottom').innerHTML = buatPolaTitik(d2_bawah);
-
-        // Hitung total nilai domino
-        let totalDomino1 = d1_ atas + d1_bawah;
-        let totalDomino2 = d2_ atas + d2_bawah;
-
-        // Cek pemenang
-        let teksHasil = "";
-        if (totalDomino1 > totalDomino2) {
-            teksHasil = "Domino 1 Menang! Total: " + totalDomino1;
-        } else if (totalDomino2 > totalDomino1) {
-            teksHasil = "Domino 2 Menang! Total: " + totalDomino2;
-        } else {
-            teksHasil = "Seri! Total Keduanya: " + totalDomino1;
+        // Fungsi saat bidak diangkat
+        function onDragStart(source, piece, position, orientation) {
+            if (game.game_over()) return false;
+            // Hanya bidak putih yang boleh jalan jika giliran putih
+            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                return false;
+            }
         }
 
-        document.getElementById('hasil').innerHTML = teksHasil;
-    }
-</script>
+        // Fungsi saat bidak dilepas
+        function onDrop(source, target) {
+            var move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // Otomatis promosi ke ratu
+            });
 
+            if (move === null) return 'snapback';
+
+            updateStatus();
+        }
+
+        // Fungsi merapikan papan setelah bidak jalan
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+
+        // Memperbarui status permainan dan giliran
+        function updateStatus() {
+            var status = '';
+            var moveColor = game.turn() === 'w' ? 'Putih' : 'Hitam';
+
+            if (game.in_checkmate()) {
+                status = 'Kalah! ' + moveColor + ' Skakmat.';
+            } else if (game.in_draw()) {
+                status = 'Seri!';
+            } else {
+                status = 'Giliran ' + moveColor;
+                if (game.in_check()) {
+                    status += ', ' + moveColor + ' dalam kondisi SKAK!';
+                }
+            }
+
+            statusEl.html(status);
+            historyEl.html(game.history().join(', '));
+        }
+
+        var config = {
+            draggable: true,
+            position: 'start',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        };
+        
+        board = ChessBoard('board', config);
+        updateStatus();
+    </script>
 </body>
 </html>
