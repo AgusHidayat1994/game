@@ -1,83 +1,255 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cazino</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Slot Zeus Simulator</title>
+    <style>
+        body {
+            background-color: #0b112c;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #ffd700;
+            text-shadow: 0 0 10px #ff8c00;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            color: #00e5ff;
+            margin-top: 0;
+            font-size: 14px;
+        }
+        .slot-container {
+            background: linear-gradient(180deg, #1a2456, #0d143a);
+            border: 4px solid #ffd700;
+            border-radius: 15px;
+            display: inline-block;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            margin-top: 20px;
+        }
+        .reels {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .reel {
+            background-color: #050a21;
+            border: 2px solid #00e5ff;
+            border-radius: 8px;
+            width: 90px;
+            height: 90px;
+            font-size: 50px;
+            line-height: 90px;
+            text-align: center;
+            user-select: none;
+            transition: transform 0.1s ease;
+        }
+        .controls {
+            margin-top: 15px;
+        }
+        button {
+            background: linear-gradient(180deg, #ffd700, #ff8c00);
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 12px 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4);
+            text-transform: uppercase;
+        }
+        button:hover {
+            background: linear-gradient(180deg, #ffe140, #ffa500);
+        }
+        button:disabled {
+            background: #555;
+            color: #aaa;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .stats {
+            margin-top: 25px;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+        .stat-box {
+            background: #161f4b;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #23327d;
+        }
+        .stat-box span {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        #message {
+            margin-top: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            height: 30px;
+            color: #00e5ff;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <span>Bet: <i id="bet">1</i></span>
-        <span id="el-win" style="display: none;">Win: +<i id="win">0</i></span>
-        <span id="el-money" class="col-red">Money $: <i id="money">0</i></span>
-        <button id="btn-putmoney">Put Money 💵</button>
-    </header>
-    <main>
-        <section class="s-game">
-            <div class="c-game">
-                <div id="game-area">
-                    <div class="c-column">
-                        <div class="column"></div>
-                    </div>
-                    <div class="c-column">
-                        <div class="column"></div>
-                    </div>
-                    <div class="c-column">
-                        <div class="column"></div>
-                    </div>
-                    <div class="c-column">
-                        <div class="column"></div>
-                    </div>
-                    <div class="c-column">
-                        <div class="column"></div>
-                    </div>
-                </div>
-                <span class="line line-1 left">-1-</span>
-                <span class="line line-1 right">-1-</span>
-                <span class="line line-2 left">-2-</span>
-                <span class="line line-2 right">-2-</span>
-                <span class="line line-3 left">-3-</span>
-                <span class="line line-3 right">-3-</span>
-            </div>
-        </section>
-        <section class="s-btns">
-            <div class="c-btn">
-                <button id="btn-bet">Bet</button>
-            </div>
-            <div class="c-btn">
-                <button id="btn-spin">SPIN</button>
-            </div>
-            <div class="c-btn">
-                <table>
-                    <tr>
-                        <td>Line</td>
-                        <td>3🍎</td>
-                        <td>4🍎</td>
-                        <td>5🍎</td>
-                    </tr>
-                    <tr>
-                        <td style="color: blue;">Line 1</td>
-                        <td>100*bet</td>
-                        <td>1000*bet</td>
-                        <td>100000*bet</td>
-                    </tr>
-                    <tr>
-                        <td style="color: green;">Line 2</td>
-                        <td>2*bet</td>
-                        <td>5*bet</td>
-                        <td>1000*bet</td>
-                    </tr>
-                    <tr>
-                        <td style="color: red;">Line 3</td>
-                        <td>2*bet</td>
-                        <td>5*bet</td>
-                        <td>1000*bet</td>
-                    </tr>
-                </table>
-            </div>
-        </section>
-    </main>
-    <script src="script.js"></script>
+
+    <h1>⚡ OLYMPUS SLOT ZEUS ⚡</h1>
+    <p class="subtitle">Simulator HTML5 Sederhana</p>
+
+    <div class="slot-container">
+        <!-- Tiga gulungan (Reels) -->
+        <div class="reels">
+            <div class="reel" id="reel1">⚡</div>
+            <div class="reel" id="reel2">👑</div>
+            <div class="reel" id="reel3">💎</div>
+        </div>
+
+        <div id="message">Tekan SPIN untuk memicu petir Zeus!</div>
+
+        <div class="controls">
+            <button id="spinBtn" onclick="spin()">SPIN</button>
+        </div>
+    </div>
+
+    <!-- Papan Skor / Kredit -->
+    <div class="stats">
+        <div class="stat-box">Kredit: <span id="credit">1000</span></div>
+        <div class="stat-box">Taruhan: <span id="bet">50</span></div>
+        <div class="stat-box">Kemenangan Terakhir: <span id="lastWin">0</span></div>
+    </div>
+
+    <script>
+        // Daftar simbol bertema Zeus / Yunani Kuno
+        const symbols = [
+            { icon: '⚡', weight: 4 },  // Petir Zeus
+            { icon: '👑', weight: 5 },  // Mahkota
+            { icon: '💎', weight: 6 },  // Permata Biru
+            { icon: '🏆', weight: 6 },  // Piala Emas
+            { icon: '🛡️', weight: 8 },  // Perisai Aegis
+            { icon: '🍷', weight: 10 }  // Cawan Anggur
+        ];
+
+        // Konfigurasi Game dasar
+        let credits = 1000;
+        const betAmount = 50;
+        let isSpinning = false;
+
+        // Elemen DOM
+        const reelElements = [
+            document.getElementById('reel1'),
+            document.getElementById('reel2'),
+            document.getElementById('reel3')
+        ];
+        const spinBtn = document.getElementById('spinBtn');
+        const creditDisplay = document.getElementById('credit');
+        const lastWinDisplay = document.getElementById('lastWin');
+        const messageDisplay = document.getElementById('message');
+
+        // Fungsi untuk mengambil simbol acak dari daftar
+        function getRandomSymbol() {
+            // Menggabungkan semua simbol ke dalam satu array berdasarkan bobotnya (weight)
+            let pool = [];
+            symbols.forEach(sym => {
+                for (let i = 0; i < sym.weight; i++) {
+                    pool.push(sym.icon);
+                }
+            });
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        // Logika Utama Putaran Slot
+        function spin() {
+            if (isSpinning || credits < betAmount) {
+                if (credits < betAmount) {
+                    messageDisplay.innerText = "Kredit tidak cukup! Silakan muat ulang halaman.";
+                    messageDisplay.style.color = "#ff4d4d";
+                }
+                return;
+            }
+
+            // Kurangi kredit pemain saat menekan spin
+            isSpinning = true;
+            spinBtn.disabled = true;
+            credits -= betAmount;
+            creditDisplay.innerText = credits;
+            messageDisplay.innerText = "Merasakan kekuatan kakek Zeus...";
+            messageDisplay.style.color = "#00e5ff";
+            lastWinDisplay.innerText = "0";
+
+            let spinCount = 0;
+            // Jalankan animasi mengacak visual reel
+            const interval = setInterval(() => {
+                reelElements.forEach(reel => {
+                    reel.innerText = symbols[Math.floor(Math.random() * symbols.length)].icon;
+                });
+                spinCount++;
+
+                // Hentikan putaran setelah 15 kali acakan visual (sekitar 1.5 detik)
+                if (spinCount >= 15) {
+                    clearInterval(interval);
+                    determineResult();
+                }
+            }, 100);
+        }
+
+        // Evaluasi Hasil Putaran
+        function determineResult() {
+            // Tentukan hasil final yang sesungguhnya secara acak
+            const res1 = getRandomSymbol();
+            const res2 = getRandomSymbol();
+            const res3 = getRandomSymbol();
+
+            // Tampilkan hasil final pada layar
+            reelElements[0].innerText = res1;
+            reelElements[1].innerText = res2;
+            reelElements[2].innerText = res3;
+
+            let winAmount = 0;
+
+            // Hitung logika kemenangan
+            if (res1 === res2 && res2 === res3) {
+                // 3 Simbol Kembar (Jackpot Utama)
+                if (res1 === '⚡') {
+                    winAmount = betAmount * 10; // Jackpot Petir Zeus (10x lipat)
+                    messageDisplay.innerText = "⚡ JACKPOT PETIR ZEUS SENSATIONAL! ⚡";
+                } else if (res1 === '👑') {
+                    winAmount = betAmount * 7;
+                    messageDisplay.innerText = "👑 Kemenangan Besar Mahkota Olympus!";
+                } else {
+                    winAmount = betAmount * 5;
+                    messageDisplay.innerText = "🎉 Anda menang 3 simbol kembar!";
+                }
+                messageDisplay.style.color = "#ffd700";
+            } else if (res1 === res2 || res2 === res3 || res1 === res3) {
+                // 2 Simbol Kembar (Hadiah Kecil)
+                winAmount = Math.floor(betAmount * 1.5);
+                messageDisplay.innerText = "✨ Lumayan! Dua simbol cocok.";
+                messageDisplay.style.color = "#00ff66";
+            } else {
+                // Kalah
+                messageDisplay.innerText = "Coba lagi! Kakek Zeus belum tersenyum.";
+                messageDisplay.style.color = "#aaa";
+            }
+
+            // Perbarui data nilai di layar
+            if (winAmount > 0) {
+                credits += winAmount;
+                creditDisplay.innerText = credits;
+                lastWinDisplay.innerText = winAmount;
+            }
+
+            // Kembalikan status tombol spin agar bisa ditekan lagi
+            isSpinning = false;
+            spinBtn.disabled = false;
+        }
+    </script>
 </body>
 </html>
