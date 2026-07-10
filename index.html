@@ -3,66 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulasi Game Slot Sederhana</title>
+    <title>Simulasi Game Slot</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
             background-color: #1a1a2e;
             color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
         }
 
         h1 {
             color: #e94560;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
             margin-bottom: 10px;
         }
 
-        .status-container {
-            display: flex;
-            gap: 30px;
+        .disclaimer {
+            font-size: 12px;
+            color: #999;
             margin-bottom: 20px;
-            font-size: 1.2rem;
+        }
+
+        .dashboard {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
             background: #16213e;
             padding: 10px 20px;
             border-radius: 8px;
             border: 1px solid #0f3460;
         }
 
-        .slot-machine {
-            background: #0f3460;
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            border: 4px solid #e94560;
-            text-align: center;
+        .stat {
+            font-size: 18px;
+            font-weight: bold;
         }
 
-        .reels {
+        .stat span {
+            color: #4ecca3;
+        }
+
+        .slot-machine {
+            background: radial-gradient(circle, #0f3460, #16213e);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7), inset 0 0 20px rgba(233, 69, 96, 0.3);
+            border: 4px solid #e94560;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .reel-container {
             display: flex;
             gap: 15px;
-            background: #16213e;
+            background-color: #1a1a2e;
             padding: 15px;
             border-radius: 10px;
-            margin-bottom: 20px;
+            border: 2px solid #0f3460;
+            margin-bottom: 25px;
         }
 
         .reel {
-            width: 80px;
-            height: 80px;
-            background: #ffffff;
-            color: #000000;
-            font-size: 3rem;
+            width: 90px;
+            height: 90px;
+            background-color: #fff;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            border: 2px solid #333;
-            transition: transform 0.1s ease;
+            font-size: 45px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            transition: transform 0.1s ease-in-out;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
         }
 
         button {
@@ -70,100 +93,108 @@
             color: white;
             border: none;
             padding: 12px 30px;
-            font-size: 1.2rem;
+            font-size: 18px;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 4px #951c32;
-            transition: all 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
         }
 
         button:hover {
-            background-color: #ff5274;
+            background-color: #ff527b;
+            transform: translateY(-2px);
         }
 
         button:active {
-            box-shadow: 0 0 #951c32;
-            transform: translateY(4px);
+            transform: translateY(1px);
         }
 
         button:disabled {
             background-color: #555;
-            box-shadow: none;
             cursor: not-allowed;
             transform: none;
         }
 
         .message {
-            margin-top: 15px;
-            font-size: 1.1rem;
+            margin-top: 20px;
+            font-size: 18px;
             font-weight: bold;
-            height: 25px;
+            height: 24px;
             color: #4ecca3;
         }
     </style>
 </head>
 <body>
 
-    <h1>🎰 SLOT SIMULATOR 🎰</h1>
+    <h1>🎰 SIMULATOR SLOT VIRTUAL 🎰</h1>
+    <div class="disclaimer">Game ini hanya untuk simulasi hiburan. Tidak menggunakan uang asli.</div>
 
-    <div class="status-container">
-        <div>Saldo: <span id="balance">100</span> Koin</div>
-        <div>Taruhan: <span id="bet">10</span> Koin</div>
+    <div class="dashboard">
+        <div class="stat">Saldo: <span id="balance">1000</span> Koin</div>
+        <div class="stat">Taruhan: <span id="bet">50</span> Koin</div>
     </div>
 
     <div class="slot-machine">
-        <div class="reels">
+        <div class="reel-container">
             <div class="reel" id="reel1">🍒</div>
             <div class="reel" id="reel2">🍋</div>
-            <div class="reel" id="reel3">🍊</div>
+            <div class="reel" id="reel3">💎</div>
         </div>
-        <button id="spin-btn" onclick="spin()">SPIN</button>
-        <div class="message" id="msg">Tekan Spin untuk bermain!</div>
+
+        <div class="controls">
+            <button id="spin-btn" onclick="spin()">PUTAR!</button>
+        </div>
+
+        <div class="message" id="message">Silakan klik putar untuk memulai!</div>
     </div>
 
     <script>
         // Daftar simbol yang digunakan dalam permainan
         const symbols = ['🍒', '🍋', '🍊', '🍇', '🔔', '💎', '7️⃣'];
         
-        let balance = 100;
-        const betCost = 10;
+        let balance = 1000;
+        const betCost = 50;
 
         const reel1 = document.getElementById('reel1');
         const reel2 = document.getElementById('reel2');
         const reel3 = document.getElementById('reel3');
-        const balanceEl = document.getElementById('balance');
-        const msgEl = document.getElementById('msg');
         const spinBtn = document.getElementById('spin-btn');
+        const balanceDisplay = document.getElementById('balance');
+        const messageDisplay = document.getElementById('message');
 
         function getRandomSymbol() {
-            return symbols[Math.floor(Math.random() * symbols.length)];
+            const randomIndex = Math.floor(Math.random() * symbols.length);
+            return symbols[randomIndex];
         }
 
         function spin() {
-            // Validasi kecukupan saldo
+            // Validasi kecukupan saldo virtual
             if (balance < betCost) {
-                msgEl.innerText = "Saldo tidak cukup! Silakan muat ulang halaman.";
-                msgEl.style.color = "#ff4a4a";
+                messageDisplay.style.color = '#e94560';
+                messageDisplay.innerText = "Saldo virtual habis! Muat ulang halaman untuk reset.";
                 return;
             }
 
-            // Kurangi saldo untuk taruhan
+            // Kurangi saldo virtual sesuai taruhan
             balance -= betCost;
-            balanceEl.innerText = balance;
-            msgEl.innerText = "Memutar...";
-            msgEl.style.color = "#ffffff";
+            balanceDisplay.innerText = balance;
+            
+            // Nonaktifkan tombol saat berputar agar tidak bisa di-spam
             spinBtn.disabled = true;
+            messageDisplay.innerText = "Memutar gulungan...";
+            messageDisplay.style.color = '#ffffff';
 
-            // Efek animasi acak sederhana sebelum berhenti
             let count = 0;
+            // Efek animasi acak sebelum berhenti
             const interval = setInterval(() => {
                 reel1.innerText = getRandomSymbol();
                 reel2.innerText = getRandomSymbol();
                 reel3.innerText = getRandomSymbol();
                 count++;
                 
-                if (count > 10) {
+                // Hentikan putaran setelah beberapa kali kocokan acak
+                if (count > 15) {
                     clearInterval(interval);
                     determineResult();
                 }
@@ -171,46 +202,41 @@
         }
 
         function determineResult() {
-            // Menentukan hasil akhir putaran
-            const res1 = getRandomSymbol();
-            const res2 = getRandomSymbol();
-            const res3 = getRandomSymbol();
+            const res1 = reel1.innerText;
+            const res2 = reel2.innerText;
+            const res3 = reel3.innerText;
 
-            // Tampilkan hasil akhir ke layar
-            reel1.innerText = res1;
-            reel2.innerText = res2;
-            reel3.innerText = res3;
-
-            // Logika kemenangan
-            if (res1 === res2 && res2 === res3) {
-                let reward = 0;
-                if (res1 === '7️⃣') {
-                    reward = 100; // Jackpot Utama
-                    msgEl.innerText = `🎉 JACKPOT UTAMA! +${reward} Koin 🎉`;
-                } else {
-                    reward = 50; // Kemenangan Biasa
-                    msgEl.innerText = `🎉 Menang Besar! +${reward} Koin 🎉`;
-                }
-                balance += reward;
-                msgEl.style.color = "#4ecca3";
-            } else if (res1 === res2 || res2 === res3 || res1 === res3) {
-                const reward = 15; // Kemenangan Kecil (2 simbol sama)
-                balance += reward;
-                msgEl.innerText = `Cukup Beruntung! Dua sama: +${reward} Koin`;
-                msgEl.style.color = "#ffb423";
-            } else {
-                msgEl.innerText = "Coba lagi! Semoga beruntung.";
-                msgEl.style.color = "#ff4a4a";
-            }
-
-            // Perbarui sisa saldo di UI dan aktifkan kembali tombol
-            balanceEl.innerText = balance;
             spinBtn.disabled = false;
 
-            if (balance < betCost) {
-                msgEl.innerText = "Game Over! Saldo Anda habis.";
-                spinBtn.disabled = true;
+            // Logika penentuan kemenangan simulasi
+            if (res1 === res2 && res2 === res3) {
+                let winAmount = 0;
+                
+                // Hadiah ekstra untuk simbol utama 7️⃣ atau 💎
+                if (res1 === '7️⃣' || res1 === '💎') {
+                    winAmount = betCost * 10; // Menang besar (Jackpot)
+                    messageDisplay.style.color = '#ffcc00';
+                    messageDisplay.innerText = `🎉 JACKPOT UTAMA! Anda menang ${winAmount} koin virtual!`;
+                } else {
+                    winAmount = betCost * 5; // Menang reguler
+                    messageDisplay.style.color = '#4ecca3';
+                    messageDisplay.innerText = `🎉 Menang Kembar 3! Anda dapat ${winAmount} koin virtual!`;
+                }
+                
+                balance += winAmount;
+            } else if (res1 === res2 || res1 === res3 || res2 === res3) {
+                // Menang kecil jika ada 2 simbol yang sama
+                const winAmount = betCost * 1.5;
+                balance += winAmount;
+                messageDisplay.style.color = '#4ecca3';
+                messageDisplay.innerText = `🙂 Lumayan! Kembar 2 dapat ${winAmount} koin virtual.`;
+            } else {
+                messageDisplay.style.color = '#e94560';
+                messageDisplay.innerText = "Coba lagi! Semoga beruntung di putaran berikutnya.";
             }
+
+            // Perbarui tampilan saldo setelah hasil keluar
+            balanceDisplay.innerText = balance;
         }
     </script>
 </body>
