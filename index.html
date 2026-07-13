@@ -3,277 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Karambol Sederhana (Player vs Bot)</title>
+    <title>Domino Cyber Game vs Bot</title>
     <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --text-color: #f8fafc;
+            --bot-color: #f43f5e;
+        }
+
         body {
-            background-color: #222;
-            color: white;
-            font-family: sans-serif;
-            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
-        canvas {
-            background-color: #f4d0a4;
-            border: 15px solid #8B4513;
-            box-shadow: 0px 0px 20px rgba(0,0,0,0.7);
-            cursor: pointer;
-        }
-        #status {
-            font-size: 20px;
+
+        h1 {
+            color: var(--accent-color);
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
             margin-bottom: 10px;
-            font-weight: bold;
         }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        /* Area Meja Permainan */
+        #board {
+            min-height: 150px;
+            background: #020617;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            border: 2px dashed #334155;
+        }
+
+        /* Desain Kartu Domino */
+        .domino-card {
+            width: 50px;
+            height: 90px;
+            background: #ffffff;
+            color: #000;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        .player-hand .domino-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+
+        .domino-half {
+            font-size: 20px;
+            font-weight: bold;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .domino-line {
+            width: 80%;
+            height: 2px;
+            background: #334155;
+        }
+
+        /* Area Tangan Pemain & Bot */
+        .hand-container {
+            margin-top: 15px;
+        }
+
+        .hand-title {
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            color: #94a3b8;
+        }
+
+        .hand {
+            display: flex;
+            gap: 10px;
+            min-height: 100px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        /* Kartu Bot disembunyikan tampilannya */
+        .bot-hand .domino-card {
+            background: linear-gradient(135deg, #f43f5e, #be123c);
+            color: transparent;
+        }
+        .bot-hand .domino-line { background: transparent; }
+
+        .btn {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { background: #475569; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <div id="status">Giliran Anda (Tarik Striker lalu Lepaskan)</div>
-    <canvas id="carromBoard" width="500" height="500"></canvas>
+    <h1>DOMINO CYBER</h1>
+    
+    <div id="game-container">
+        <div class="status-bar">
+            <div id="turn-indicator">Giliran: Pemain</div>
+            <button class="btn" id="draw-btn" onclick="drawCard()">Ambil Kartu</button>
+        </div>
 
-<script>
-const canvas = document.getElementById("carromBoard");
-const ctx = canvas.getContext("2d");
-const statusDiv = document.getElementById("status");
+        <div class="hand-container">
+            <div class="hand-title" style="color: var(--bot-color)">Bot Hand (<span id="bot-count">0</span> kartu)</div>
+            <div id="bot-hand" class="hand bot-hand"></div>
+        </div>
 
-// Konfigurasi Game
-const BOARD_SIZE = 500;
-const FRICTION = 0.98;
-let isYourTurn = true;
-let isAiming = false;
-let aimStart = { x: 0, y: 0 };
+        <div class="hand-container">
+            <div class="hand-title">Meja Pertandingan</div>
+            <div id="board">--- Meja Kosong ---</div>
+        </div>
 
-// Struktur Objek Koin/Striker
-class Disc {
-    constructor(x, y, radius, color, isStriker = false) {
-        this.x = x;
-        this.y = y;
-        this.radius = radius;
-        this.color = color;
-        this.vx = 0;
-        this.vy = 0;
-        this.isStriker = isStriker;
-    }
+        <div class="hand-container">
+            <div class="hand-title" style="color: var(--accent-color)">Your Hand</div>
+            <div id="player-hand" class="hand player-hand"></div>
+        </div>
+    </div>
 
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.strokeStyle = "#000";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.closePath();
-    }
+    <script>
+        let deck = [];
+        let playerHand = [];
+        let botHand = [];
+        let board = []; // Menyimpan deretan kartu di meja [[a,b], [b,c]]
+        let isPlayerTurn = true;
 
-    update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        this.vx *= FRICTION;
-        this.vy *= FRICTION;
-
-        // Berhenti jika sangat lambat
-        if (Math.abs(this.vx) < 0.1) this.vx = 0;
-        if (Math.abs(this.vy) < 0.1) this.vy = 0;
-
-        // Pantulan Dinding
-        if (this.x - this.radius < 0 || this.x + this.radius > BOARD_SIZE) {
-            this.vx *= -1;
-            this.x = this.x - this.radius < 0 ? this.radius : BOARD_SIZE - this.radius;
-        }
-        if (this.y - this.radius < 0 || this.y + this.radius > BOARD_SIZE) {
-            this.vy *= -1;
-            this.y = this.y - this.radius < 0 ? this.radius : BOARD_SIZE - this.radius;
-        }
-    }
-}
-
-// Lubang Karambol (4 Sudut)
-const holes = [
-    { x: 25, y: 25 },
-    { x: 475, y: 25 },
-    { x: 25, y: 475 },
-    { x: 475, y: 475 }
-];
-
-// Inisialisasi Striker dan Koin
-let striker = new Disc(BOARD_SIZE / 2, 400, 20, "#e74c3c", true);
-let coins = [];
-
-// Tambah Koin Merah (Ratu) di tengah
-coins.push(new Disc(BOARD_SIZE / 2, BOARD_SIZE / 2, 15, "#f1c40f"));
-// Tambah beberapa koin putih dan hitam acak di tengah
-for (let i = 0; i < 6; i++) {
-    let angle = (i * Math.PI) / 3;
-    let dist = 35;
-    let color = i % 2 === 0 ? "#ffffff" : "#333333";
-    coins.push(new Disc(BOARD_SIZE / 2 + Math.cos(angle) * dist, BOARD_SIZE / 2 + Math.sin(angle) * dist, 15, color));
-}
-
-// Deteksi Tabrakan Fisika Antar Koin
-function handleCollisions() {
-    let all = [striker, ...coins];
-    for (let i = 0; i < all.length; i++) {
-        for (let j = i + 1; j < all.length; j++) {
-            let dist = Math.hypot(all[i].x - all[j].x, all[i].y - all[j].y);
-            if (dist < all[i].radius + all[j].radius) {
-                // Efek pantulan elastis sederhana
-                let angle = Math.atan2(all[j].y - all[i].y, all[j].x - all[i].x);
-                let speed1 = Math.hypot(all[i].vx, all[i].vy);
-                let speed2 = Math.hypot(all[j].vx, all[j].vy);
-
-                all[i].vx = -Math.cos(angle) * (speed1 + 2);
-                all[i].vy = -Math.sin(angle) * (speed1 + 2);
-                all[j].vx = Math.cos(angle) * (speed2 + 2);
-                all[j].vy = Math.sin(angle) * (speed2 + 2);
+        // 1. Inisialisasi Game
+        function initGame() {
+            deck = [];
+            playerHand = [];
+            botHand = [];
+            board = [];
+            
+            // Buat kartu domino (0-0 sampai 6-6)
+            for (let i = 0; i <= 6; i++) {
+                for (let j = i; j <= 6; j++) {
+                    deck.push([i, j]);
+                }
             }
-        }
-    }
-}
+            // Acak kartu
+            deck.sort(() => Math.random() - 0.5);
 
-// Cek koin yang masuk lubang
-function checkHoles() {
-    coins = coins.filter(coin => {
-        for (let hole of holes) {
-            if (Math.hypot(coin.x - hole.x, coin.y - hole.y) < 30) {
-                return false; // Koin dihapus (masuk lubang)
+            // Bagi kartu (masing-masing dapat 7)
+            for (let i = 0; i < 7; i++) {
+                playerHand.push(deck.pop());
+                botHand.push(deck.pop());
             }
+
+            isPlayerTurn = true;
+            updateUI();
         }
-        return true;
-    });
 
-    // Jika striker masuk lubang, kembalikan ke posisi awal
-    for (let hole of holes) {
-        if (Math.hypot(striker.x - hole.x, striker.y - hole.y) < 30) {
-            striker.vx = 0; striker.vy = 0;
-            striker.x = BOARD_SIZE / 2;
-            striker.y = isYourTurn ? 400 : 100;
+        // 2. Update Tampilan (UI)
+        function updateUI() {
+            // Render Meja
+            const boardEl = document.getElementById('board');
+            if (board.length === 0) {
+                boardEl.innerHTML = '--- Meja Kosong (Mainkan kartu mana saja) ---';
+            } else {
+                boardEl.innerHTML = '';
+                board.forEach(card => {
+                    boardEl.appendChild(createCardUI(card, false));
+                });
+            }
+
+            // Render Tangan Pemain
+            const playerHandEl = document.getElementById('player-hand');
+            playerHandEl.innerHTML = '';
+            playerHand.forEach((card, index) => {
+                const cardEl = createCardUI(card, true);
+                cardEl.onclick = () => playPlayerCard(index);
+                playerHandEl.appendChild(cardEl);
+            });
+
+            // Render Tangan Bot (Disembunyikan kodenya)
+            const botHandEl = document.getElementById('bot-hand');
+            botHandEl.innerHTML = '';
+            botHand.forEach(() => {
+                botHandEl.appendChild(createCardUI([?, ?], false)); 
+            });
+            document.getElementById('bot-count').innerText = botHand.length;
+
+            // Status giliran
+            document.getElementById('turn-indicator').innerText = isPlayerTurn ? "Giliran: Kamu" : "Giliran: Bot...";
+            document.getElementById('draw-btn').disabled = deck.length === 0 || !isPlayerTurn;
+
+            checkWinCondition();
         }
-    }
-}
 
-// Cek apakah semua objek sudah berhenti bergerak
-function isEverythingStopped() {
-    if (striker.vx !== 0 || striker.vy !== 0) return false;
-    for (let coin of coins) {
-        if (coin.vx !== 0 || coin.vy !== 0) return false;
-    }
-    return true;
-}
-
-// AI Bot Logic
-function playBotTurn() {
-    statusDiv.innerText = "Giliran Bot sedang membidik...";
-    striker.x = BOARD_SIZE / 2;
-    striker.y = 100; // Bot menembak dari atas
-
-    setTimeout(() => {
-        if (coins.length === 0) return;
-        // Bot mengincar koin pertama yang ada di daftar
-        let target = coins[0];
-        let angle = Math.atan2(target.y - striker.y, target.x - striker.x);
-        let power = 15; // Kekuatan tembakan bot
-
-        striker.vx = Math.cos(angle) * power;
-        striker.vy = Math.sin(angle) * power;
-
-        isYourTurn = true;
-    }, 1500);
-}
-
-// Input Kendali Player (Mouse/Touch)
-canvas.addEventListener("mousedown", (e) => {
-    if (!isYourTurn || !isEverythingStopped()) return;
-    const rect = canvas.getBoundingClientRect();
-    let mouseX = e.clientX - rect.left;
-    let mouseY = e.clientY - rect.top;
-
-    if (Math.hypot(mouseX - striker.x, mouseY - striker.y) < striker.radius + 10) {
-        isAiming = true;
-        aimStart = { x: mouseX, y: mouseY };
-    }
-});
-
-canvas.addEventListener("mousemove", (e) => {
-    if (!isAiming) return;
-    const rect = canvas.getBoundingClientRect();
-    aimStart.currentX = e.clientX - rect.left;
-    aimStart.currentY = e.clientY - rect.top;
-});
-
-canvas.addEventListener("mouseup", (e) => {
-    if (!isAiming) return;
-    isAiming = false;
-
-    const rect = canvas.getBoundingClientRect();
-    let mouseX = e.clientX - rect.left;
-    let mouseY = e.clientY - rect.top;
-
-    // Hitung arah dorongan (kebalikan dari tarikan garis)
-    let dx = striker.x - mouseX;
-    let dy = striker.y - mouseY;
-    
-    striker.vx = dx * 0.15;
-    striker.vy = dy * 0.15;
-
-    isYourTurn = false;
-});
-
-// Loop Utama Game
-let lastStoppedState = true;
-
-function gameLoop() {
-    // Bersihkan Canvas & Gambar Papan
-    ctx.clearRect(0, 0, BOARD_SIZE, BOARD_SIZE);
-    
-    // Gambar Lubang
-    ctx.fillStyle = "#333";
-    for (let hole of holes) {
-        ctx.beginPath();
-        ctx.arc(hole.x, hole.y, 25, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    // Update & Gambar Koin
-    striker.update();
-    striker.draw();
-    
-    coins.forEach(coin => {
-        coin.update();
-        coin.draw();
-    });
-
-    handleCollisions();
-    checkHoles();
-
-    // Gambar garis bidikan jika sedang membidik
-    if (isAiming) {
-        ctx.beginPath();
-        ctx.moveTo(striker.x, striker.y);
-        ctx.lineTo(aimStart.currentX, aimStart.currentY);
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-    }
-
-    // Mengatur pergantian giliran setelah semua koin berhenti bergerak
-    let stopped = isEverythingStopped();
-    if (stopped && !lastStoppedState) {
-        if (!isYourTurn) {
-            playBotTurn();
-        } else {
-            statusDiv.innerText = "Giliran Anda (Tarik Striker lalu Lepaskan)";
-            striker.x = BOARD_SIZE / 2;
-            striker.y = 400; // Kembalikan posisi striker player di bawah
+        // Fungsi pembantu membuat elemen kartu HTML
+        function createCardUI(card, isInteractive) {
+            const div = document.createElement('div');
+            div.className = 'domino-card';
+            div.innerHTML = `
+                <div class="domino-half">${card[0] !== undefined ? card[0] : ''}</div>
+                <div class="domino-line"></div>
+                <div class="domino-half">${card[1] !== undefined ? card[1] : ''}</div>
+            `;
+            return div;
         }
-    }
-    lastStoppedState = stopped;
 
-    requestAnimationFrame(gameLoop);
-}
+        // 3. Logika Logis Permainan
+        function getOpenEnds() {
+            if (board.length === 0) return null;
+            return {
+                left: board[0][0],
+                right: board[board.length - 1][1]
+            };
+        }
 
-// Jalankan Game
-gameLoop();
-</script>
-</body>
-</html>
+        function checkValidMove(card) {
+            const ends = getOpenEnds();
+            if (!ends) return 'any'; // Meja kosong, bebas pasang
+            
+            if (card[0] === ends.left || card[1] === ends.left) return 'left';
+            if (card[0] === ends.right || card[1] === ends.right) return 'right';
+            return null;
+        }
+
+        function playPlayerCard(index) {
+            if (!isPlayerTurn) return;
+            const card = playerHand[index];
+            const move = checkValidMove(card);
+
+            if (move) {
+                executeMove(card, move, playerHand, index);
+                isPlayerTurn = false;
+                updateUI();
+                setTimeout
+        
