@@ -1,269 +1,173 @@
-package com.example.snakeandladder
-
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.random.Random
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = Color(0xFF121212) // Tema gelap yang keren
-            ) {
-                SnakeLadderGame()
-            }
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Ular Tangga Modern (Vs BOT)</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --text-light: #f8fafc;
         }
-    }
-}
 
-// Map Posisi Ular dan Tangga (Kunci -> Nilai Tujuan)
-val snakes = mapOf(17 to 7, 54 to 34, 62 to 19, 64 to 60, 87 to 24, 93 to 73, 95 to 75, 99 to 78)
-val ladders = mapOf(4 to 14, 9 to 31, 20 to 38, 28 to 84, 40 to 59, 51 to 67, 63 to 81, 71 to 91)
-
-@Composable
-fun SnakeLadderGame() {
-    var playerPos by remember { mutableStateOf(1) }
-    var botPos by remember { mutableStateOf(1) }
-    var isPlayerTurn by remember { mutableStateOf(true) }
-    var diceRoll by remember { mutableStateOf(1) }
-    var gameStatus by remember { mutableStateOf("Giliranmu! Lempar dadu.") }
-    var isRolling by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-
-    // Fungsi Gerakan Pemain/Bot
-    fun movePlayer(currentPos: Int, roll: Int, isBot: Boolean): Int {
-        var newPos = currentPos + roll
-        if (newPos > 100) {
-            return currentPos // Harus pas ke 100
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
-        
-        // Cek Ular
-        if (snakes.containsKey(newPos)) {
-            newPos = snakes[newPos]!!
-            if (!isBot) gameStatus = "Aww! Kamu digigit ular ke $newPos!"
-            else gameStatus = "Yess! Bot digigit ular ke $newPos!"
-        }
-        // Cek Tangga
-        else if (ladders.containsKey(newPos)) {
-            newPos = ladders[newPos]!!
-            if (!isBot) gameStatus = "Keren! Kamu naik tangga ke $newPos!"
-            else gameStatus = "Oh tidak! Bot naik tangga ke $newPos!"
-        }
-        return newPos
-    }
 
-    // AI Bot Turn Logic
-    LaunchedEffect(isPlayerTurn) {
-        if (!isPlayerTurn && playerPos < 100 && botPos < 100) {
-            gameStatus = "Bot sedang berpikir..."
-            delay(1500) // Delay agar simulasi bot terasa nyata
-            val botRoll = Random.nextInt(1, 7)
-            diceRoll = botRoll
-            botPos = movePlayer(botPos, botRoll, true)
+        h1 {
+            margin-bottom: 10px;
+            color: #38bdf8;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
+
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+        }
+
+        #boardCanvas {
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            background: #111827;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            width: 250px;
+            gap: 15px;
+        }
+
+        .status-box {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .player-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .token-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .p1-color { background-color: #ff4757; box-shadow: 0 0 8px #ff4757;}
+        .p2-color { background-color: #2ed573; box-shadow: 0 0 8px #2ed573;}
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #dice-result {
+            font-size: 48px;
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #fbbf24;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+            animation: pulse 0.5s infinite alternate;
+        }
+
+        #log {
+            height: 120px;
+            overflow-y: auto;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            border: 1px solid #334155;
+            color: #94a3b8;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>ULAR TANGGA - CYBER EDITION</h1>
+
+    <div class="game-container">
+        <canvas id="boardCanvas" width="500" height="500"></canvas>
+
+        <div class="controls">
+            <div class="status-box">
+                <div class="player-status">
+                    <span class="token-dot p1-color"></span>
+                    <span>Kamu (P1): Kotak <span id="p1-pos">0</span></span>
+                </div>
+                <div class="player-status">
+                    <span class="token-dot p2-color"></span>
+                    <span>Bot (P2): Kotak <span id="p2-pos">0</span></span>
+                </div>
+                <hr style="border-color: #334155;">
+                <div style="text-align: center; font-size: 14px; color: #94a3b8;">Giliran: <span id="current-turn" style="color:#fff; font-weight:bold;">Pemain 1</span></div>
+            </div>
+
+            <div id="dice-result">⚀</div>
+
+            <button id="roll-btn" class="btn">Kocok Dadu</button>
             
-            if (botPos == 100) {
-                gameStatus = "Yahh, Bot Menang! Coba lagi."
-            } else {
-                gameStatus = "Bot mendapat angka $botRoll. Sekarang giliranmu!"
-                isPlayerTurn = true
-            }
-        }
-    }
+            <div id="log">Selamat datang! Silakan kocok dadu untuk memulai.</div>
+        </div>
+    </div>
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
-    ) {
-        // Bagian Header
-        Text(
-            text = "ULAR TANGGA PRO",
-            color = Color.Cyan,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+    <script>
+        const canvas = document.getElementById('boardCanvas');
+        const ctx = canvas.getContext('2d');
+        const rollBtn = document.getElementById('roll-btn');
+        const diceResult = document.getElementById('dice-result');
+        const logBox = document.getElementById('log');
 
-        // Status Game
-        Text(
-            text = gameStatus,
-            color = Color.White,
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
-                .padding(8.dp)
-        )
-
-        // Papan Game (Board)
-        Box(
-            modifier = Modifier
-                .aspectRatio(1f)
-                .fillMaxWidth()
-                .background(Color(0xFF1A1A1A), RoundedCornerShape(12.dp))
-        ) {
-            GameBoardCanvas(playerPos = playerPos, botPos = botPos)
-        }
-
-        // Skor & Posisi Saat ini
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Text("Kamu (Merah): Posisi $playerPos", color = Color.Red, fontWeight = FontWeight.Bold)
-            Text("Bot (Kuning): Posisi $botPos", color = Color.Yellow, fontWeight = FontWeight.Bold)
-        }
-
-        // Control Panel (Dadu & Tombol)
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            // Tampilan Dadu Keren
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .background(Color.DarkGray, RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = diceRoll.toString(),
-                    color = Color.White,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Tombol Roll Dice
-            Button(
-                onClick = {
-                    if (isPlayerTurn && playerPos < 100 && botPos < 100 && !isRolling) {
-                        coroutineScope.launch {
-                            isRolling = true
-                            // Animasi acak dadu berputar cepat
-                            repeat(6) {
-                                diceRoll = Random.nextInt(1, 7)
-                                delay(100)
-                            }
-                            playerPos = movePlayer(playerPos, diceRoll, false)
-                            
-                            if (playerPos == 100) {
-                                gameStatus = "HOREEE! KAMU MENANG! 🎉"
-                            } else {
-                                isPlayerTurn = false
-                            }
-                            isRolling = false
-                        }
-                    }
-                },
-                enabled = isPlayerTurn && playerPos < 100 && botPos < 100 && !isRolling,
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E676)),
-                shape = RoundedCornerShape(50),
-                modifier = Modifier.width(200.dp)
-            ) {
-                Text(
-                    text = if (isPlayerTurn) "Kocok Dadu!" else "Bot Berjalan...",
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-        }
-    }
-}
-
-// Canvas untuk Menggambar Grid, Ular, Tangga, dan Pion
-@Composable
-fun GameBoardCanvas(playerPos: Int, botPos: Int) {
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        val boardSize = 10
-        val cellSizeX = size.width / boardSize
-        val cellSizeY = size.height / boardSize
-
-        // 1. Gambar Grid (Papan 10x10)
-        for (row in 0 until boardSize) {
-            for (col in 0 until boardSize) {
-                val isEvenRow = row % 2 == 0
-                val actualCol = if (isEvenRow) col else (boardSize - 1 - col)
-                val cellNumber = (9 - row) * boardSize + (actualCol + 1)
-
-                val x = col * cellSizeX
-                val y = row * cellSizeY
-
-                // Warna belang-belang keren (Retro cyberpunk)
-                val cellColor = if ((row + col) % 2 == 0) Color(0xFF222222) else Color(0xFF2D2D2D)
-                drawRect(color = cellColor, topLeft = Offset(x, y), size = androidx.compose.ui.geometry.Size(cellSizeX, cellSizeY))
-            }
-        }
-
-        // Fungsi bantu mendapatkan koordinat pixel dari nomor kotak (1-100)
-        fun getCoordinates(position: Int): Offset {
-            val zeroBasedPos = position - 1
-            val row = zeroBasedPos / 10
-            val col = zeroBasedPos % 10
-            val isEvenRow = row % 2 == 0
-            val targetCol = if (isEvenRow) col else (10 - 1 - col)
-            val targetRow = 9 - row
-            return Offset(
-                x = targetCol * cellSizeX + (cellSizeX / 2),
-                y = targetRow * cellSizeY + (cellSizeY / 2)
-            )
-        }
-
-        // 2. Gambar Tangga (Warna Hijau Neon)
-        ladders.forEach { (start, end) ->
-            val startPt = getCoordinates(start)
-            val endPt = getCoordinates(end)
-            drawLine(
-                color = Color(0xFF00FFCC),
-                start = startPt,
-                end = endPt,
-                strokeWidth = 8f,
-                cap = StrokeCap.Round
-            )
-        }
-
-        // 3. Gambar Ular (Warna Merah Neon/Orange)
-        snakes.forEach { (start, end) ->
-            val startPt = getCoordinates(start) // Kepala Ular
-            val endPt = getCoordinates(end) // Ekor Ular
-            drawLine(
-                color = Color(0xFFFF3366),
-                start = startPt,
-                end = endPt,
-                strokeWidth = 10f,
-                cap = StrokeCap.Round
-            )
-        }
-
-        // 4. Gambar Pion Player (Lingkaran Merah)
-        val playerCoords = getCoordinates(playerPos)
-        drawCircle(
-            color = Color.Red,
-            radius = cellSizeX / 4f,
-            center = Offset(playerCoords.x - 10f, playerCoords.y - 10f)
+        const boardSize = 10;
+        const cellSize = canvas.width / boardSize;
