@@ -3,180 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Monopoly vs Bot</title>
+    <title>Monopoly 3D VS Bot</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #f0f0f0; }
-        #board { display: grid; grid-template-columns: repeat(4, 80px); grid-template-rows: repeat(4, 80px); gap: 5px; justify-content: center; margin: 20px auto; }
-        .cell { border: 2px solid #333; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; position: relative; }
-        .cell .players { position: absolute; bottom: 5px; font-size: 14px; }
-        #controls { margin-top: 20px; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
-        button:disabled { background: #ccc; }
-        #log { width: 320px; height: 150px; margin: 20px auto; background: white; border: 1px solid #ccc; overflow-y: scroll; padding: 10px; text-align: left; font-size: 13px; }
+        body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
+        #ui { position: absolute; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 8px; pointer-events: none; }
+        button { pointer-events: auto; padding: 8px 12px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        #canvas-container { width: 100vw; height: 100vh; }
     </style>
+    <!-- Memuat Three.js untuk Grafis 3D -->
+    <script src="https://cloudflare.com"></script>
 </head>
 <body>
 
-    <h1>Mini Monopoly (vs Bot)</h1>
-    <div id="status">Giliran Anda!</div>
-    
-    <!-- Papan Game 4x4 (12 Kotak Keliling) -->
-    <div id="board">
-        <div class="cell" id="cell-0">START<div class="players" id="p-0">👤🤖</div></div>
-        <div class="cell" id="cell-1" style="background:#ffcccb">Jakarta<br>$100<div class="players" id="p-1"></div></div>
-        <div class="cell" id="cell-2" style="background:#ffcccb">Bandung<br>$120<div class="players" id="p-2"></div></div>
-        <div class="cell" id="cell-3" style="background:#b3e5fc">Surabaya<br>$140<div class="players" id="p-3"></div></div>
-        <div class="cell" id="cell-11" style="background:#fff9c4">Medan<br>$240<div class="players" id="p-11"></div></div>
-        <div class="cell" style="border:none; background:transparent;"></div>
-        <div class="cell" style="border:none; background:transparent;"></div>
-        <div class="cell" id="cell-4" style="background:#b3e5fc">Bali<br>$160<div class="players" id="p-4"></div></div>
-        <div class="cell" id="cell-10" style="background:#fff9c4">Makassar<br>$220<div class="players" id="p-10"></div></div>
-        <div class="cell" style="border:none; background:transparent;"></div>
-        <div class="cell" style="border:none; background:transparent;"></div>
-        <div class="cell" id="cell-5" style="background:#c8e6c9">Semarang<br>$180<div class="players" id="p-5"></div></div>
-        <div class="cell" id="cell-9" style="background:#d1c4e9">Papua<br>$200<div class="players" id="p-9"></div></div>
-        <div class="cell" id="cell-8" style="background:#d1c4e9">Jogja<br>$200<div class="players" id="p-8"></div></div>
-        <div class="cell" id="cell-7" style="background:#c8e6c9">Lombok<br>$180<div class="players" id="p-7"></div></div>
-        <div class="cell" id="cell-6" style="background:#ffcc80">PENJARA<div class="players" id="p-6"></div></div>
+    <div id="ui">
+        <h2>Monopoly 3D Mini</h2>
+        <div id="status">Giliran: Pemain 1 (Anda)</div>
+        <div id="info">Posisi P1: Petak 0 | Posisi Bot: Petak 0</div>
+        <button id="roll-btn" onclick="jalankanGiliranPemain()">Kocok Dadu</button>
     </div>
 
-    <div id="controls">
-        <button id="roll-btn" onclick="playTurn()">Kocok Dadu</button>
-    </div>
-
-    <h3>Log Permainan</h3>
-    <div id="log"></div>
+    <div id="canvas-container"></div>
 
     <script>
-        // Data Kotak Papan
-        const boardData = [
-            { name: "START", price: 0, type: "special" },
-            { name: "Jakarta", price: 100, type: "property", owner: null },
-            { name: "Bandung", price: 120, type: "property", owner: null },
-            { name: "Surabaya", price: 140, type: "property", owner: null },
-            { name: "Bali", price: 160, type: "property", owner: null },
-            { name: "Semarang", price: 180, type: "property", owner: null },
-            { name: "PENJARA", price: 0, type: "special" },
-            { name: "Lombok", price: 180, type: "property", owner: null },
-            { name: "Jogja", price: 200, type: "property", owner: null },
-            { name: "Papua", price: 200, type: "property", owner: null },
-            { name: "Makassar", price: 220, type: "property", owner: null },
-            { name: "Medan", price: 240, type: "property", owner: null }
+        // --- 1. SETUP ENGINE 3D (THREE.JS) ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x202026);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 15, 15);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Pencahayaan
+        const light = new THREE.DirectionalLight(0xffffff, 1.2);
+        light.position.set(5, 10, 7);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
+
+        // --- 2. MEMBUAT PAPAN MONOPOLY 3D ---
+        // Membuat papan dasar kotak besar
+        const boardGeometry = new THREE.BoxGeometry(10, 0.2, 10);
+        const boardMaterial = new THREE.MeshStandardMaterial({ color: 0xcce6ff });
+        const board = new THREE.Mesh(boardGeometry, boardMaterial);
+        scene.add(board);
+
+        // Koordinat 4 sudut petak utama (Sederhana: 4 petak saja untuk contoh tracker lintasan)
+        // Petak 0 (Mulai), Petak 1 (Kiri Atas), Petak 2 (Kanan Atas), Petak 3 (Kanan Bawah)
+        const koordinatPetak = [
+            new THREE.Vector3(-4, 0.3, 4),  // Petak 0 (Start)
+            new THREE.Vector3(-4, 0.3, -4), // Petak 1
+            new THREE.Vector3(4, 0.3, -4),  // Petak 2
+            new THREE.Vector3(4, 0.3, 4)    // Petak 3
         ];
 
-        // Status Pemain
-        const players = [
-            { id: 0, name: "Anda (👤)", money: 1000, pos: 0, icon: "👤", isBot: false },
-            { id: 1, name: "Bot (🤖)", money: 1000, pos: 0, icon: "🤖", isBot: true }
-        ];
+        // Visualisasi petak di papan
+        koordinatPetak.forEach((pos, index) => {
+            const tileGeo = new THREE.BoxGeometry(1.5, 0.22, 1.5);
+            const tileMat = new THREE.MeshStandardMaterial({ color: index === 0 ? 0xff4d4d : 0xffffff });
+            const tile = new THREE.Mesh(tileGeo, tileMat);
+            tile.position.copy(pos);
+            scene.add(tile);
+        });
 
-        let turn = 0; // 0 = User, 1 = Bot
+        // --- 3. MEMBUAT BIDAK PEMAIN (3D) ---
+        // Bidak Pemain 1 (Bola Merah)
+        const p1Geo = new THREE.SphereGeometry(0.4, 32, 32);
+        const p1Mat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        const bidakP1 = new THREE.Mesh(p1Geo, p1Mat);
+        scene.add(bidakP1);
 
-        function writeLog(msg) {
-            const logDiv = document.getElementById("log");
-            logDiv.innerHTML += msg + "<br>";
-            logDiv.scrollTop = logDiv.scrollHeight;
+        // Bidak Bot/Pemain 2 (Bola Biru)
+        const botGeo = new THREE.SphereGeometry(0.4, 32, 32);
+        const botMat = new THREE.MeshStandardMaterial({ color: 0x0000ff });
+        const bidakBot = new THREE.Mesh(botGeo, botMat);
+        scene.add(bidakBot);
+
+        // --- 4. LOGIKA GAME & BOT ---
+        let statusGame = {
+            posisiP1: 0,
+            posisiBot: 0,
+            giliranPemain: true // true = P1, false = Bot
+        };
+
+        function updatePosisiBidak() {
+            // Update posisi 3D berdasarkan koordinat petak
+            bidakP1.position.copy(koordinatPetak[statusGame.posisiP1]);
+            // Beri sedikit offset koordinat X agar bidak bot tidak menumpuk persis di tengah bidak P1
+            bidakBot.position.copy(koordinatPetak[statusGame.posisiBot]).add(new THREE.Vector3(0.5, 0, 0));
+            
+            document.getElementById('info').innerText = `Posisi P1: Petak ${statusGame.posisiP1} | Posisi Bot: Petak ${statusGame.posisiBot}`;
         }
 
-        function updateBoard() {
-            // Bersihkan semua ikon pemain di papan
-            for (let i = 0; i < 12; i++) {
-                document.getElementById(`p-${i}`).innerText = "";
-            }
-            // Taruh pemain di posisi baru
-            players.forEach(p => {
-                document.getElementById(`p-${p.pos}`).innerText += p.icon;
+        // Inisialisasi awal posisi
+        updatePosisiBidak();
+
+        function kocokDadu() {
+            return Math.floor(Math.random() * 3) + 1; // Dadu mini: angka 1 sampai 3
+        }
+
+        function jalankanGiliranPemain() {
+            if (!statusGame.giliranPemain) return; // Kunci tombol jika giliran bot
+
+            const angkaDadu = kocokDadu();
+            statusGame.posisiP1 = (statusGame.posisiP1 + angkaDadu) % koordinatPetak.length;
+            updatePosisiBidak();
+            
+            document.getElementById('status').innerText = `Pemain 1 maju ${angkaDadu} langkah.`;
+            document.getElementById('roll-btn').disabled = true;
+
+            // Alihkan giliran ke Bot setelah 1.5 detik
+            statusGame.giliranPemain = false;
+            setTimeout(jalankanGiliranBot, 1500);
+        }
+
+        // --- KECERDASAN BUATAN (BOT AI) ---
+        function jalankanGiliranBot() {
+            document.getElementById('status').innerText = `Bot sedang berpikir...`;
+            
+            setTimeout(() => {
+                const angkaDadu = kocokDadu();
+                statusGame.posisiBot = (statusGame.posisiBot + angkaDadu) % koordinatPetak.length;
+                updatePosisiBidak();
+                
+                document.getElementById('status').innerText = `Bot (P2) maju ${angkaDadu} langkah. Giliran Anda!`;
+                
+                // Kembalikan giliran ke pemain asli
+                statusGame.giliranPemain = true;
+                document.getElementById('roll-btn').disabled = false;
+            }, 1200); // Simulasi delay bot berpikir
+        }
+
+        // --- 5. GAME LOOP ANIMATION ---
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animasi rotasi papan pelan agar efek 3D terasa nyata
+            board.rotation.y += 0.002;
+            koordinatPetak.forEach((pos, index) => {
+                // Ikut memutar posisi logika pelat agar bidak menempel sempurna
+                // (Untuk kesederhanaan prototipe ini, kamera diputar statis saja jika ingin dikembangkan lebih lanjut)
             });
-            // Update teks status uang
-            document.getElementById("status").innerHTML = 
-                `GIRAN: <b>${players[turn].name}</b><br>
-                 Uang Anda: $${players[0].money} | Uang Bot: $${players[1].money}`;
+
+            renderer.render(scene, camera);
         }
+        animate();
 
-        function playTurn() {
-            if (players[turn].isBot) return; // Mencegah klik saat giliran Bot
-
-            document.getElementById("roll-btn").disabled = true;
-            movePlayer(players[0]);
+        // Menyesuaikan ukuran layar otomatis
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize(){
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         }
-
-        function movePlayer(player) {
-            const dice = Math.floor(Math.random() * 6) + 1;
-            player.pos = (player.pos + dice) % 12;
-            writeLog(`🎲 ${player.name} mengocok dadu: <b>${dice}</b>. Tiba di ${boardData[player.pos].name}.`);
-            
-            handleCell(player);
-            updateBoard();
-
-            // Cek kondisi kalah
-            if (player.money <= 0) {
-                writeLog(`🚨 <b>${player.name} BANGKRUT! Game Selesai.</b>`);
-                return;
-            }
-
-            // Ganti Giliran
-            turn = turn === 0 ? 1 : 0;
-            
-            if (players[turn].isBot) {
-                setTimeout(botTurn, 1500); // Bot jalan otomatis setelah 1.5 detik
-            } else {
-                document.getElementById("roll-btn").disabled = false;
-            }
-        }
-
-        function handleCell(player) {
-            const cell = boardData[player.pos];
-
-            if (cell.type === "property") {
-                if (cell.owner === null) {
-                    // Jika belum ada pemilik
-                    if (!player.isBot) {
-                        // Logika untuk Player (Konfirmasi Beli)
-                        if (player.money >= cell.price) {
-                            if (confirm(`Apakah Anda ingin membeli ${cell.name} seharga $${cell.price}?`)) {
-                                buyProperty(player, cell);
-                            } else {
-                                writeLog(`❌ Anda memilih untuk tidak membeli ${cell.name}.`);
-                            }
-                        } else {
-                            writeLog(`💸 Uang tidak cukup untuk membeli ${cell.name}.`);
-                        }
-                    } else {
-                        // Logika Kecerdasan Buatan (Bot AI)
-                        // Aturan Bot: Beli jika uang tersisa setelah beli masih > $200
-                        if (player.money - cell.price > 200) {
-                            buyProperty(player, cell);
-                        } else {
-                            writeLog(`🤖 Bot memutuskan menghemat uang, tidak membeli ${cell.name}.`);
-                        }
-                    }
-                } else if (cell.owner !== player.id) {
-                    // Jika tanah milik musuh (Bayar Sewa)
-                    const rent = Math.floor(cell.price * 0.3); // Sewa 30% dari harga rumah
-                    const ownerIndex = cell.owner;
-                    player.money -= rent;
-                    players[ownerIndex].money += rent;
-                    writeLog(`💰 ${player.name} membayar sewa $${rent} kepada ${players[ownerIndex].name}.`);
-                }
-            } else if (cell.name === "PENJARA") {
-                player.money -= 50;
-                writeLog(`🔒 ${player.name} masuk penjara! Denda $50.`);
-            }
-        }
-
-        function buyProperty(player, cell) {
-            player.money -= cell.price;
-            cell.owner = player.id;
-            document.getElementById(`cell-${player.pos}`).style.border = `3px solid ${player.id === 0 ? 'blue' : 'red'}`;
-            writeLog(`🏠 ${player.name} sukses membeli <b>${cell.name}</b> seharga $${cell.price}.`);
-        }
-
-        function botTurn() {
-            movePlayer(players[1]);
-        }
-
-        // Jalankan update tampilan pertama kali
-        updateBoard();
     </script>
 </body>
 </html>
